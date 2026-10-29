@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "winnerclient",
+  "version": "1.0.0",
+  "name": "WinnerClient",
+  "description": "WinnerClient mod for Minecraft 1.21.11",
+  "authors": ["WinnerClient"],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/winnerclient/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["com.winnerclient.fabric.WinnerClientMod"]
+  },
+  "mixins": ["winnerclient.mixins.json"],
+  "accessWidener": "winnerclient.accesswidener",
+  "depends": {
+    "fabricloader": ">=0.16.5",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

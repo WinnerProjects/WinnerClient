@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Fabric-Mod-Loader: fabric
+Fabric-Mod-Version: 1.0.0
+Fabric-Mod-Id: winnerclient
+Implementation-Version: 1.0.0
+Implementation-Title: WinnerClient
+Implementation-Vendor: WinnerClient
+
