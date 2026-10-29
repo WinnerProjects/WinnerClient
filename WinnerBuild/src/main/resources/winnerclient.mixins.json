@@ -1,0 +1,23 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.winnerclient.fabric.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "BlockModelRendererMixin",
+    "BlockRenderManagerMixin",
+    "BlockStateMixin",
+    "CameraMixin",
+    "ChatHudMixin",
+    "ClientPlayerInteractionManagerMixin",
+    "EntityMixin",
+    "EntityRendererMixin",
+    "LivingEntityMixin",
+    "GameRendererAccessor",
+    "PlayerListEntryMixin",
+    "ClientPlayNetworkHandlerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

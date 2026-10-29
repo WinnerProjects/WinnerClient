@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Premain-Class: com.winnerclient.agent.WinnerClientAgent
+Agent-Class: com.winnerclient.agent.WinnerClientAgent
+Can-Redefine-Classes: true
+Can-Retransform-Classes: true
+Can-Set-Native-Method-Prefix: true
+Implementation-Version: 1.0.0
+Implementation-Title: WinnerClient Agent
+Implementation-Vendor: WinnerClient
