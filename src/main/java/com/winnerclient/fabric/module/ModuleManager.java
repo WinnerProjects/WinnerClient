@@ -54,6 +54,7 @@ public class ModuleManager {
 
         // Render
         register(new ESP());
+        register(new BlockESP());
         register(new StorageESP());
         register(new HoleESP());
         register(new Fullbright());
