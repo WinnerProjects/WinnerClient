@@ -3,20 +3,22 @@ package com.winnerclient.fabric.event;
 import com.winnerclient.fabric.ConfigManager;
 import com.winnerclient.fabric.WinnerClientMod;
 import com.winnerclient.fabric.module.ModuleManager;
+import com.winnerclient.fabric.module.misc.ChunkFinder;
+
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import org.lwjgl.glfw.GLFW;
 
 public class EventBus {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
+
     private static boolean initialized = false;
     private static long lastTickTime = System.currentTimeMillis();
     private static int ticks = 0;
@@ -26,11 +28,30 @@ public class EventBus {
         if (initialized) return;
         initialized = true;
 
+        // Chunk verisi yüklendiğinde ilgili ChunkFinder sonuçlarını güncelle.
+        ClientChunkEvents.CHUNK_LOAD.register((world, chunk) -> {
+            var module = ModuleManager.getModule("ChunkFinder");
+
+            if (module instanceof ChunkFinder finder) {
+                finder.changed(chunk.getPos().x, chunk.getPos().z);
+            }
+        });
+
+        // Chunk kaldırılırken ilgili önbelleği geçersiz kıl.
+        ClientChunkEvents.CHUNK_UNLOAD.register((world, chunk) -> {
+            var module = ModuleManager.getModule("ChunkFinder");
+
+            if (module instanceof ChunkFinder finder) {
+                finder.changed(chunk.getPos().x, chunk.getPos().z);
+            }
+        });
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
 
             long now = System.currentTimeMillis();
             ticks++;
+
             if (now - lastTickTime >= 1000) {
                 tickRate = ticks * 1000.0f / (now - lastTickTime);
                 ticks = 0;
