@@ -16,6 +16,7 @@
     "GameRendererAccessor",
     "PlayerListEntryMixin",
     "ClientPlayNetworkHandlerMixin"
+    "ChunkFinderWorldMixin"
   ],
   "injectors": {
     "defaultRequire": 1
