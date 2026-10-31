@@ -264,6 +264,14 @@ public class ClickGuiScreen extends Screen {
     }
 
     private void renderStringSetting(DrawContext context, int x, int y, Setting.StringSetting ss) {
+        if (selectedModule instanceof com.winnerclient.fabric.module.render.BlockESP esp
+                && ss.getName().equals("Blocks")) {
+            String label = "Select blocks (" + esp.getSelectedIds().size() + ")";
+            context.fill(x + 8, y, x + 188, y + 14, 0xFF17134A);
+            context.drawTextWithShadow(client.textRenderer, label, x + 12, y + 3, 0xFFECE9FF);
+            return;
+        }
+
         boolean focused = focusedString == ss;
         int boxX = x + 8;
         int boxW = 180;
@@ -422,7 +430,13 @@ public class ClickGuiScreen extends Screen {
                     }
                 } else if (s instanceof Setting.StringSetting ss) {
                     if (mx >= x + 8 && mx <= x + 8 + 180) {
-                        focusedString = (focusedString == ss) ? null : ss;
+                        if (selectedModule instanceof com.winnerclient.fabric.module.render.BlockESP esp
+                                && ss.getName().equals("Blocks")) {
+                            focusedString = null;
+                            client.setScreen(new BlockPickerScreen(this, esp));
+                        } else {
+                            focusedString = (focusedString == ss) ? null : ss;
+                        }
                     }
                 }
             }
@@ -575,4 +589,4 @@ public class ClickGuiScreen extends Screen {
         }
         return false;
     }
-}
+                        }
