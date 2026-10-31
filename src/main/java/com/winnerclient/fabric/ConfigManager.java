@@ -18,6 +18,7 @@ public class ConfigManager {
     public static void init() {
         configPath = MinecraftClient.getInstance().runDirectory.toPath()
                 .resolve("config").resolve(WinnerClientMod.MOD_ID + ".json");
+
         try {
             Files.createDirectories(configPath.getParent());
         } catch (IOException e) {
@@ -25,35 +26,49 @@ public class ConfigManager {
         }
     }
 
-    public static boolean isLoading() { return loading; }
-    public static java.io.File getConfigFile() { return configPath != null ? configPath.toFile() : null; }
+    public static boolean isLoading() {
+        return loading;
+    }
+
+    public static java.io.File getConfigFile() {
+        return configPath != null ? configPath.toFile() : null;
+    }
 
     public static void load() {
         if (configPath == null) init();
         if (!Files.exists(configPath)) return;
 
         loading = true;
+
         try {
             String content = Files.readString(configPath);
             JsonObject root = GSON.fromJson(content, JsonObject.class);
+
             if (root == null || !root.has("modules")) return;
 
             JsonObject modulesObj = root.getAsJsonObject("modules");
+
             for (Module m : ModuleManager.getModules()) {
                 if (!modulesObj.has(m.getName())) continue;
+
                 JsonObject modObj = modulesObj.getAsJsonObject(m.getName());
 
                 if (modObj.has("enabled")) {
                     m.setEnabled(modObj.get("enabled").getAsBoolean());
                 }
+
                 if (modObj.has("keyBind")) {
                     m.setKeyBind(modObj.get("keyBind").getAsInt());
                 }
+
                 if (modObj.has("settings")) {
                     JsonObject settingsObj = modObj.getAsJsonObject("settings");
+
                     for (Setting<?> s : m.getSettings()) {
                         if (!settingsObj.has(s.getName())) continue;
+
                         JsonElement val = settingsObj.get(s.getName());
+
                         if (s instanceof Setting.BoolSetting bs) {
                             bs.setValue(val.getAsBoolean());
                         } else if (s instanceof Setting.NumberSetting ns) {
@@ -64,10 +79,13 @@ public class ConfigManager {
                             ms.setValue(val.getAsString());
                         } else if (s instanceof Setting.ColorSetting cs) {
                             cs.setValue(val.getAsInt());
+                        } else if (s instanceof Setting.StringSetting ss) {
+                            ss.setValue(val.getAsString());
                         }
                     }
                 }
             }
+
             WinnerClientMod.LOGGER.info("Config loaded from {}", configPath);
         } catch (Exception e) {
             WinnerClientMod.LOGGER.error("Failed to load config", e);
@@ -84,10 +102,12 @@ public class ConfigManager {
 
         for (Module m : ModuleManager.getModules()) {
             JsonObject modObj = new JsonObject();
+
             modObj.addProperty("enabled", m.isEnabled());
             modObj.addProperty("keyBind", m.getRawKeyBind());
 
             JsonObject settingsObj = new JsonObject();
+
             for (Setting<?> s : m.getSettings()) {
                 if (s instanceof Setting.BoolSetting bs) {
                     settingsObj.addProperty(s.getName(), bs.getValue());
@@ -99,8 +119,11 @@ public class ConfigManager {
                     settingsObj.addProperty(s.getName(), ms.getValue());
                 } else if (s instanceof Setting.ColorSetting cs) {
                     settingsObj.addProperty(s.getName(), cs.getValue());
+                } else if (s instanceof Setting.StringSetting ss) {
+                    settingsObj.addProperty(s.getName(), ss.getValue());
                 }
             }
+
             modObj.add("settings", settingsObj);
             modulesObj.add(m.getName(), modObj);
         }
