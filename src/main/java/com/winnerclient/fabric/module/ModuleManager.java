@@ -87,6 +87,7 @@ public class ModuleManager {
         register(new RenderDistanceBypass());
         register(new PacketStorageFinder());
         register(new SeedChunkFinder());
+        register(new ChunkFinder());
 
         for (Module module : modules) {
             if (module.isEnabled()) {
