@@ -7,18 +7,18 @@
     "BlockModelRendererMixin",
     "BlockRenderManagerMixin",
     "BlockStateMixin",
+    "ReverseXRayRegionMixin",
     "CameraMixin",
     "ChatHudMixin",
     "ClientPlayerInteractionManagerMixin",
     "EntityMixin",
     "EntityRendererMixin",
+    "KeyboardInputMixin",
     "LivingEntityMixin",
     "GameRendererAccessor",
     "PlayerListEntryMixin",
     "ClientPlayNetworkHandlerMixin",
-    "ChunkFinderWorldMixin",
-    "KeyboardInputMixin",
-    "FreecamWorldRendererMixin"
+    "ChunkFinderWorldMixin"
   ],
   "injectors": {
     "defaultRequire": 1
