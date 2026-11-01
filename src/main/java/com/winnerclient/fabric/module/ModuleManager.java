@@ -1,19 +1,22 @@
 package com.winnerclient.fabric.module;
 
+import com.winnerclient.fabric.module.client.*;
 import com.winnerclient.fabric.module.combat.*;
+import com.winnerclient.fabric.module.misc.*;
 import com.winnerclient.fabric.module.movement.*;
 import com.winnerclient.fabric.module.player.*;
 import com.winnerclient.fabric.module.render.*;
 import com.winnerclient.fabric.module.world.*;
-
-import com.winnerclient.fabric.module.client.*;
-import com.winnerclient.fabric.module.misc.*;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ModuleManager {
@@ -84,11 +87,10 @@ public class ModuleManager {
         register(new RenderDistanceBypass());
         register(new PacketStorageFinder());
         register(new SeedChunkFinder());
-        register(new ChunkFinder());
 
-        for (Module m : modules) {
-            if (m.isEnabled()) {
-                m.onEnable();
+        for (Module module : modules) {
+            if (module.isEnabled()) {
+                module.onEnable();
             }
         }
     }
@@ -98,41 +100,54 @@ public class ModuleManager {
         moduleMap.put(module.getName().toLowerCase(), module);
     }
 
-    public static List<Module> getModules() { return modules; }
+    public static List<Module> getModules() {
+        return modules;
+    }
 
     public static List<Module> getEnabledModules() {
-        return modules.stream().filter(Module::isEnabled).collect(Collectors.toList());
+        return modules.stream()
+                .filter(Module::isEnabled)
+                .collect(Collectors.toList());
     }
 
     public static List<Module> getModulesByCategory(Module.Category category) {
-        return modules.stream().filter(m -> m.getCategory() == category).collect(Collectors.toList());
+        return modules.stream()
+                .filter(module -> module.getCategory() == category)
+                .collect(Collectors.toList());
     }
 
     public static Module getModule(String name) {
         return moduleMap.get(name.toLowerCase());
     }
 
-    private static final java.util.BitSet prevKeys = new java.util.BitSet(512);
+    private static final BitSet prevKeys = new BitSet(512);
 
     public static void checkKeybinds() {
         MinecraftClient mc = MinecraftClient.getInstance();
+
         if (mc.currentScreen != null) return;
+
         long window = mc.getWindow().getHandle();
         if (window == 0) return;
-        for (Module m : modules) {
-            int kb = m.getKeyBind();
-            if (kb <= 0) continue;
-            boolean pressed = GLFW.glfwGetKey(window, kb) == GLFW.GLFW_PRESS;
-            boolean wasPressed = prevKeys.get(kb);
-            prevKeys.set(kb, pressed);
-            if (m.isHoldToUse()) {
-                if (pressed && !m.isEnabled()) {
-                    m.setEnabled(true);
-                } else if (!pressed && m.isEnabled()) {
-                    m.setEnabled(false);
+
+        for (Module module : modules) {
+            int key = module.getKeyBind();
+            if (key <= 0) continue;
+
+            boolean pressed =
+                    GLFW.glfwGetKey(window, key) == GLFW.GLFW_PRESS;
+            boolean wasPressed = prevKeys.get(key);
+
+            prevKeys.set(key, pressed);
+
+            if (module.isHoldToUse()) {
+                if (pressed && !module.isEnabled()) {
+                    module.setEnabled(true);
+                } else if (!pressed && module.isEnabled()) {
+                    module.setEnabled(false);
                 }
             } else if (pressed && !wasPressed) {
-                m.toggle();
+                module.toggle();
             }
         }
     }
@@ -140,9 +155,13 @@ public class ModuleManager {
     public static void onTick() {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
-        for (Module m : modules) {
-            if (m.isEnabled()) {
-                try { m.onTick(); } catch (Exception ignored) {}
+
+        for (Module module : modules) {
+            if (module.isEnabled()) {
+                try {
+                    module.onTick();
+                } catch (Exception ignored) {
+                }
             }
         }
     }
@@ -150,9 +169,13 @@ public class ModuleManager {
     public static void onRender(DrawContext context, float delta) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
-        for (Module m : modules) {
-            if (m.isEnabled()) {
-                try { m.onRender(context, delta); } catch (Exception ignored) {}
+
+        for (Module module : modules) {
+            if (module.isEnabled()) {
+                try {
+                    module.onRender(context, delta);
+                } catch (Exception ignored) {
+                }
             }
         }
     }
@@ -160,20 +183,28 @@ public class ModuleManager {
     public static void onWorldRender(WorldRenderContext context) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
-        for (Module m : modules) {
-            if (m.isEnabled()) {
-                try { m.onWorldRender(context); } catch (Exception ignored) {}
+
+        for (Module module : modules) {
+            if (module.isEnabled()) {
+                try {
+                    module.onWorldRender(context);
+                } catch (Exception ignored) {
+                }
             }
         }
     }
 
     public static void onDisconnect() {
-        for (Module m : modules) {
-            try { m.onDisconnect(); } catch (Exception ignored) {}
+        for (Module module : modules) {
+            try {
+                module.onDisconnect();
+            } catch (Exception ignored) {
+            }
         }
     }
 
-    public static void onJoin() {}
+    public static void onJoin() {
+    }
 
     public static void onEnable(Module module) {
         module.setEnabled(true);
