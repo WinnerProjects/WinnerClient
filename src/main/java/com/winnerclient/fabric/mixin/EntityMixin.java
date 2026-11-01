@@ -3,6 +3,7 @@ package com.winnerclient.fabric.mixin;
 import com.winnerclient.fabric.CameraOverriddenEntity;
 import com.winnerclient.fabric.module.player.Freecam;
 import com.winnerclient.fabric.module.render.Freelook;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.MathHelper;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,9 +21,29 @@ public abstract class EntityMixin implements CameraOverriddenEntity {
     @Unique private float savedYaw;
     @Unique private float savedPitch;
 
-    @Inject(method = "changeLookDirection", at = @At("HEAD"), cancellable = true)
-    private void onTurn(double cursorDeltaX, double cursorDeltaY, CallbackInfo ci) {
-        if (Freelook.isActive()) {
+    @Inject(
+        method = "changeLookDirection",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void onTurn(
+        double cursorDeltaX,
+        double cursorDeltaY,
+        CallbackInfo ci
+    ) {
+        // Only change the local player's camera.
+        if ((Object) this != MinecraftClient.getInstance().player) {
+            return;
+        }
+
+        // Freecam takes priority when both modules are enabled.
+        if (Freecam.isActive()) {
+            Freecam.changeLookDirection(
+                cursorDeltaX * 0.15,
+                cursorDeltaY * 0.15
+            );
+            ci.cancel();
+        } else if (Freelook.isActive()) {
             double pitchDelta = cursorDeltaY * 0.15;
             double yawDelta = cursorDeltaX * 0.15;
 
@@ -31,12 +52,13 @@ public abstract class EntityMixin implements CameraOverriddenEntity {
                 hasAnchor = true;
             }
 
-            cameraPitch = MathHelper.clamp(cameraPitch + (float)pitchDelta, -90, 90);
-            cameraYaw += (float)yawDelta;
+            cameraPitch = MathHelper.clamp(
+                cameraPitch + (float) pitchDelta,
+                -90.0f,
+                90.0f
+            );
+            cameraYaw += (float) yawDelta;
 
-            ci.cancel();
-        } else if (Freecam.isActive()) {
-            Freecam.changeLookDirection(cursorDeltaX * 0.15, cursorDeltaY * 0.15);
             ci.cancel();
         } else if (hasAnchor) {
             hasAnchor = false;
@@ -44,32 +66,53 @@ public abstract class EntityMixin implements CameraOverriddenEntity {
     }
 
     @Override
-    public float freelook$getCameraPitch() { return cameraPitch; }
+    public float freelook$getCameraPitch() {
+        return cameraPitch;
+    }
 
     @Override
-    public float freelook$getCameraYaw() { return cameraYaw; }
+    public float freelook$getCameraYaw() {
+        return cameraYaw;
+    }
 
     @Override
-    public void freelook$setCameraPitch(float pitch) { this.cameraPitch = pitch; }
+    public void freelook$setCameraPitch(float pitch) {
+        this.cameraPitch = pitch;
+    }
 
     @Override
-    public void freelook$setCameraYaw(float yaw) { this.cameraYaw = yaw; }
+    public void freelook$setCameraYaw(float yaw) {
+        this.cameraYaw = yaw;
+    }
 
     @Override
-    public void freelook$setAnchorYaw(float yaw) { this.anchorYaw = yaw; this.hasAnchor = true; }
+    public void freelook$setAnchorYaw(float yaw) {
+        this.anchorYaw = yaw;
+        this.hasAnchor = true;
+    }
 
     @Override
-    public boolean freelook$hasAnchor() { return hasAnchor; }
+    public boolean freelook$hasAnchor() {
+        return hasAnchor;
+    }
 
     @Override
-    public float freelook$getSavedYaw() { return savedYaw; }
+    public float freelook$getSavedYaw() {
+        return savedYaw;
+    }
 
     @Override
-    public float freelook$getSavedPitch() { return savedPitch; }
+    public float freelook$getSavedPitch() {
+        return savedPitch;
+    }
 
     @Override
-    public void freelook$setSavedYaw(float yaw) { this.savedYaw = yaw; }
+    public void freelook$setSavedYaw(float yaw) {
+        this.savedYaw = yaw;
+    }
 
     @Override
-    public void freelook$setSavedPitch(float pitch) { this.savedPitch = pitch; }
+    public void freelook$setSavedPitch(float pitch) {
+        this.savedPitch = pitch;
+    }
 }
