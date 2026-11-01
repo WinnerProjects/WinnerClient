@@ -5,7 +5,6 @@ import com.winnerclient.fabric.module.Setting;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.PlayerInput;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 
 public class Freecam extends Module {
@@ -24,8 +23,19 @@ public class Freecam extends Module {
             false
     );
 
+    private static final PlayerInput EMPTY_INPUT = new PlayerInput(
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+    );
+
     private static Vec3d pos;
     private static Vec3d prevPos;
+
     private static float yaw;
     private static float pitch;
     private static float lastYaw;
@@ -33,6 +43,13 @@ public class Freecam extends Module {
 
     private static volatile boolean active;
     private static volatile boolean bypassActive;
+
+    /*
+     * KeyboardInputMixin, oyuncunun girdisini sıfırlamadan önce
+     * kamera için buraya kaydeder.
+     */
+    private static PlayerInput cameraInput = EMPTY_INPUT;
+    private static boolean keepSneaking;
 
     private Vec3d returnPos;
     private float returnYaw;
@@ -52,6 +69,22 @@ public class Freecam extends Module {
 
     public static boolean isAntiFreecamBypassActive() {
         return active && bypassActive;
+    }
+
+    /**
+     * KeyboardInputMixin tarafından çağrılır.
+     * Orijinal tuşları kamera hareketi için saklar.
+     */
+    public static void captureInput(PlayerInput input) {
+        cameraInput = input != null ? input : EMPTY_INPUT;
+    }
+
+    /**
+     * Freecam açıldığında oyuncu eğiliyorsa, kamera hareket ederken
+     * oyuncunun eğilme durumunu korur.
+     */
+    public static boolean shouldKeepSneaking() {
+        return active && keepSneaking;
     }
 
     public static double getX(float tickDelta) {
@@ -79,6 +112,7 @@ public class Freecam extends Module {
         lastPitch = pitch;
 
         yaw += (float) deltaX;
+
         pitch = MathHelper.clamp(
                 pitch + (float) deltaY,
                 -90.0f,
@@ -90,7 +124,12 @@ public class Freecam extends Module {
     public void onEnable() {
         MinecraftClient mc = MinecraftClient.getInstance();
 
-        if (mc.player == null || mc.world == null) return;
+        if (mc.player == null || mc.world == null) {
+            active = false;
+            bypassActive = false;
+            cameraInput = EMPTY_INPUT;
+            return;
+        }
 
         returnPos = mc.player.getEntityPos();
         returnYaw = mc.player.getYaw();
@@ -103,9 +142,11 @@ public class Freecam extends Module {
 
         yaw = camera.getYaw();
         pitch = camera.getPitch();
-
         lastYaw = yaw;
         lastPitch = pitch;
+
+        keepSneaking = mc.player.isSneaking();
+        cameraInput = EMPTY_INPUT;
 
         mc.player.setNoGravity(true);
         mc.player.setVelocity(Vec3d.ZERO);
@@ -121,10 +162,13 @@ public class Freecam extends Module {
     @Override
     public void onDisable() {
         MinecraftClient mc = MinecraftClient.getInstance();
+
         boolean wasBypassActive = bypassActive;
 
         active = false;
         bypassActive = false;
+        cameraInput = EMPTY_INPUT;
+        keepSneaking = false;
 
         if (mc.player != null) {
             mc.player.setNoGravity(false);
@@ -143,6 +187,8 @@ public class Freecam extends Module {
             }
         }
 
+        returnPos = null;
+
         if (wasBypassActive) {
             reloadRenderer();
         }
@@ -152,7 +198,9 @@ public class Freecam extends Module {
     public void onTick() {
         MinecraftClient mc = MinecraftClient.getInstance();
 
-        if (mc.player == null || mc.world == null || pos == null) return;
+        if (!active || mc.player == null || mc.world == null || pos == null) {
+            return;
+        }
 
         boolean requestedBypass = antiFreecamBypass.getValue();
 
@@ -161,68 +209,52 @@ public class Freecam extends Module {
             reloadRenderer();
         }
 
+        PlayerInput input = cameraInput;
+
         double spd = speed.getValue();
+        double mult = input.sprint() ? 1.0 : 0.5;
 
         Vec3d forward = Vec3d.fromPolar(0, yaw).normalize();
         Vec3d right = Vec3d.fromPolar(0, yaw + 90).normalize();
 
-        double velX = 0;
-        double velY = 0;
-        double velZ = 0;
+        double velX = 0.0;
+        double velY = 0.0;
+        double velZ = 0.0;
 
-        var input = mc.player.input;
-
-        double mult = input.playerInput.sprint() ? 1.0 : 0.5;
-
-        if (input.playerInput.forward()) {
+        if (input.forward()) {
             velX += forward.x * mult * spd;
             velZ += forward.z * mult * spd;
         }
 
-        if (input.playerInput.backward()) {
+        if (input.backward()) {
             velX -= forward.x * mult * spd;
             velZ -= forward.z * mult * spd;
         }
 
-        if (input.playerInput.right()) {
+        if (input.right()) {
             velX += right.x * mult * spd;
             velZ += right.z * mult * spd;
         }
 
-        if (input.playerInput.left()) {
+        if (input.left()) {
             velX -= right.x * mult * spd;
             velZ -= right.z * mult * spd;
         }
 
-        if (input.playerInput.forward()
-                || input.playerInput.backward()) {
-            if (input.playerInput.right()
-                    || input.playerInput.left()) {
-                double diagonal = 1.0 / Math.sqrt(2.0);
-                velX *= diagonal;
-                velZ *= diagonal;
-            }
+        if ((input.forward() || input.backward())
+                && (input.right() || input.left())) {
+            double diagonal = 1.0 / Math.sqrt(2.0);
+            velX *= diagonal;
+            velZ *= diagonal;
         }
 
-        if (input.playerInput.jump()) {
+        if (input.jump()) {
             velY += mult * spd;
         }
 
-        if (input.playerInput.sneak()) {
+        if (input.sneak()) {
             velY -= mult * spd;
         }
-
-        input.playerInput = new PlayerInput(
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false
-        );
-
-        input.movementVector = Vec2f.ZERO;
 
         prevPos = pos;
         pos = pos.add(velX, velY, velZ);
