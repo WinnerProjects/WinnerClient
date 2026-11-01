@@ -18,17 +18,44 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class CameraMixin {
 
     @Shadow private boolean thirdPerson;
-    @Shadow private void setRotation(float yaw, float pitch) {}
-    @Shadow private void setPos(double x, double y, double z) {}
-    @Shadow private float clipToSpace(float distance) { return distance; }
+
+    @Shadow
+    private void setRotation(float yaw, float pitch) {}
+
+    @Shadow
+    private void setPos(double x, double y, double z) {}
+
+    @Shadow
+    private float clipToSpace(float distance) {
+        return distance;
+    }
 
     @Inject(method = "update", at = @At("TAIL"))
-    private void onUpdate(World area, Entity focusedEntity, boolean tp, boolean inverseView, float tickDelta, CallbackInfo ci) {
+    private void onUpdate(
+        World area,
+        Entity focusedEntity,
+        boolean tp,
+        boolean inverseView,
+        float tickDelta,
+        CallbackInfo ci
+    ) {
         if (Freecam.isActive()) {
             this.thirdPerson = true;
-            setRotation(Freecam.getYaw(tickDelta), Freecam.getPitch(tickDelta));
-            setPos(Freecam.getX(tickDelta), Freecam.getY(tickDelta) + focusedEntity.getStandingEyeHeight(), Freecam.getZ(tickDelta));
-        } else if (Freelook.isActive() && focusedEntity instanceof CameraOverriddenEntity coe) {
+
+            setRotation(
+                Freecam.getYaw(tickDelta),
+                Freecam.getPitch(tickDelta)
+            );
+
+            // Freecam already stores the camera's eye-level position.
+            setPos(
+                Freecam.getX(tickDelta),
+                Freecam.getY(tickDelta),
+                Freecam.getZ(tickDelta)
+            );
+        } else if (Freelook.isActive()
+            && focusedEntity instanceof CameraOverriddenEntity coe) {
+
             float flYaw = coe.freelook$getCameraYaw();
             float flPitch = coe.freelook$getCameraPitch();
 
@@ -45,7 +72,7 @@ public class CameraMixin {
             double dy = -MathHelper.sin(pitchRad);
             double dz = MathHelper.cos(yawRad) * MathHelper.cos(pitchRad);
 
-            dist = clipToSpace((float)dist);
+            dist = clipToSpace((float) dist);
 
             setPos(
                 entityPos.x + dx * dist,
