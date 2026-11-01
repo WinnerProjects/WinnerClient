@@ -88,6 +88,7 @@ public class ModuleManager {
         register(new PacketStorageFinder());
         register(new SeedChunkFinder());
         register(new ChunkFinder());
+        register(new RedstoneDebug());
 
         for (Module module : modules) {
             if (module.isEnabled()) {
