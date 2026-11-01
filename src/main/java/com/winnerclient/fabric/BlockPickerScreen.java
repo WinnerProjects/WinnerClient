@@ -1,5 +1,6 @@
 package com.winnerclient.fabric;
 
+import com.winnerclient.fabric.module.BlockSelection;
 import com.winnerclient.fabric.module.render.BlockESP;
 import net.minecraft.block.Block;
 import net.minecraft.client.gui.Click;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class BlockPickerScreen extends Screen {
     private static final int BACKGROUND = 0xFF050A1F;
@@ -30,7 +32,7 @@ public class BlockPickerScreen extends Screen {
     private static final int ROW_HEIGHT = 25;
 
     private final Screen parent;
-    private final BlockESP esp;
+    private final BlockSelection selection;
 
     private final List<Block> allBlocks = new ArrayList<>();
     private final List<Block> filtered = new ArrayList<>();
@@ -38,11 +40,14 @@ public class BlockPickerScreen extends Screen {
     private String query = "";
     private int scroll = 0;
 
-    public BlockPickerScreen(Screen parent, BlockESP esp) {
+    /**
+     * XRay, ReverseXRay ve BlockSelection kullanan diğer modüller.
+     */
+    public BlockPickerScreen(Screen parent, BlockSelection selection) {
         super(Text.literal("Select blocks"));
 
         this.parent = parent;
-        this.esp = esp;
+        this.selection = selection;
 
         Registries.BLOCK.forEach(allBlocks::add);
 
@@ -53,6 +58,33 @@ public class BlockPickerScreen extends Screen {
         );
 
         updateFilter();
+    }
+
+    /**
+     * BlockESP'nin mevcut kodunu değiştirmeden aynı menüyü kullanır.
+     */
+    public BlockPickerScreen(Screen parent, BlockESP esp) {
+        this(parent, new BlockSelection() {
+            @Override
+            public String getName() {
+                return esp.getName();
+            }
+
+            @Override
+            public Set<String> getSelectedIds() {
+                return esp.getSelectedIds();
+            }
+
+            @Override
+            public boolean isSelected(Block block) {
+                return esp.isSelected(block);
+            }
+
+            @Override
+            public void toggleBlock(Block block) {
+                esp.toggleBlock(block);
+            }
+        });
     }
 
     private int panelWidth() {
@@ -80,7 +112,10 @@ public class BlockPickerScreen extends Screen {
     }
 
     private int visibleRows() {
-        return Math.max(1, (listBottom() - listTop()) / ROW_HEIGHT);
+        return Math.max(
+            1,
+            (listBottom() - listTop()) / ROW_HEIGHT
+        );
     }
 
     private void updateFilter() {
@@ -93,9 +128,9 @@ public class BlockPickerScreen extends Screen {
             String name = block.getName().getString();
 
             if (
-                needle.isEmpty() ||
-                id.toLowerCase(Locale.ROOT).contains(needle) ||
-                name.toLowerCase(Locale.ROOT).contains(needle)
+                needle.isEmpty()
+                    || id.toLowerCase(Locale.ROOT).contains(needle)
+                    || name.toLowerCase(Locale.ROOT).contains(needle)
             ) {
                 filtered.add(block);
             }
@@ -119,7 +154,14 @@ public class BlockPickerScreen extends Screen {
         int border
     ) {
         context.fill(x1, y1, x2, y2, border);
-        context.fill(x1 + 1, y1 + 1, x2 - 1, y2 - 1, color);
+
+        context.fill(
+            x1 + 1,
+            y1 + 1,
+            x2 - 1,
+            y2 - 1,
+            color
+        );
     }
 
     @Override
@@ -140,13 +182,14 @@ public class BlockPickerScreen extends Screen {
 
         context.drawTextWithShadow(
             client.textRenderer,
-            "BLOCK ESP",
+            selection.getName().toUpperCase(Locale.ROOT),
             x + 12,
             y + 10,
             TEXT_COLOR
         );
 
-        String selectedCount = esp.getSelectedIds().size() + " selected";
+        String selectedCount =
+            selection.getSelectedIds().size() + " selected";
 
         context.drawTextWithShadow(
             client.textRenderer,
@@ -170,7 +213,12 @@ public class BlockPickerScreen extends Screen {
             ? "Search block name or ID..."
             : query + "_";
 
-        context.enableScissor(x + 15, y + 30, x + w - 15, y + 48);
+        context.enableScissor(
+            x + 15,
+            y + 30,
+            x + w - 15,
+            y + 48
+        );
 
         context.drawTextWithShadow(
             client.textRenderer,
@@ -195,7 +243,12 @@ public class BlockPickerScreen extends Screen {
         int rowStart = listTop();
         int rowEnd = listBottom();
 
-        context.enableScissor(x + 10, rowStart, x + w - 10, rowEnd);
+        context.enableScissor(
+            x + 10,
+            rowStart,
+            x + w - 10,
+            rowEnd
+        );
 
         for (int row = 0; row < visibleRows(); row++) {
             int index = scroll + row;
@@ -207,13 +260,13 @@ public class BlockPickerScreen extends Screen {
             Block block = filtered.get(index);
             int rowY = rowStart + row * ROW_HEIGHT;
 
-            boolean selected = esp.isSelected(block);
+            boolean selected = selection.isSelected(block);
 
             boolean hovered =
-                mouseX >= x + 10 &&
-                mouseX < x + w - 10 &&
-                mouseY >= rowY &&
-                mouseY < rowY + ROW_HEIGHT - 2;
+                mouseX >= x + 10
+                    && mouseX < x + w - 10
+                    && mouseY >= rowY
+                    && mouseY < rowY + ROW_HEIGHT - 2;
 
             int rowColor = selected
                 ? SELECTED
@@ -229,7 +282,6 @@ public class BlockPickerScreen extends Screen {
                 selected ? PURPLE : BORDER
             );
 
-            // Blocks without an item form remain selectable.
             context.drawItem(
                 new ItemStack(block.asItem()),
                 x + 15,
@@ -277,7 +329,7 @@ public class BlockPickerScreen extends Screen {
 
         context.drawTextWithShadow(
             client.textRenderer,
-            "Click to select  |  Scroll  |  Esc to return",
+            "Click to select | Scroll | Esc to return",
             x + 12,
             y + h - 17,
             MUTED
@@ -297,16 +349,16 @@ public class BlockPickerScreen extends Screen {
         int w = panelWidth();
 
         if (
-            mx >= x + 10 &&
-            mx < x + w - 10 &&
-            my >= listTop() &&
-            my < listBottom()
+            mx >= x + 10
+                && mx < x + w - 10
+                && my >= listTop()
+                && my < listBottom()
         ) {
             int row = (int) ((my - listTop()) / ROW_HEIGHT);
             int index = scroll + row;
 
             if (index >= 0 && index < filtered.size()) {
-                esp.toggleBlock(filtered.get(index));
+                selection.toggleBlock(filtered.get(index));
                 return true;
             }
         }
@@ -322,10 +374,10 @@ public class BlockPickerScreen extends Screen {
         double verticalAmount
     ) {
         if (
-            mouseX >= left() + 10 &&
-            mouseX < left() + panelWidth() - 10 &&
-            mouseY >= listTop() &&
-            mouseY < listBottom()
+            mouseX >= left() + 10
+                && mouseX < left() + panelWidth() - 10
+                && mouseY >= listTop()
+                && mouseY < listBottom()
         ) {
             if (verticalAmount > 0) {
                 scroll -= 3;
@@ -390,4 +442,4 @@ public class BlockPickerScreen extends Screen {
     public void close() {
         client.setScreen(parent);
     }
-              }
+}
