@@ -3,6 +3,7 @@ package com.winnerclient.fabric.module.render;
 import com.winnerclient.fabric.module.Module;
 import com.winnerclient.fabric.module.ModuleManager;
 import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 
 public class XRay extends SelectedBlocksModule {
     private static final String DEFAULT_BLOCKS = String.join(",",
@@ -37,7 +38,6 @@ public class XRay extends SelectedBlocksModule {
 
     @Override
     public void onEnable() {
-        // İki modülün render kuralları çakışmasın.
         Module reverse = ModuleManager.getModule("ReverseXRay");
 
         if (reverse != null && reverse.isEnabled()) {
@@ -65,5 +65,22 @@ public class XRay extends SelectedBlocksModule {
         return module instanceof XRay xray
             && xray.isEnabled()
             && xray.containsForRendering(block);
+    }
+
+    /**
+     * Eski XRay mixin'leriyle uyumluluk.
+     */
+    public static boolean isVisible(Block block) {
+        if (!isActive()) {
+            return true;
+        }
+
+        if (block == Blocks.AIR
+            || block == Blocks.CAVE_AIR
+            || block == Blocks.VOID_AIR) {
+            return true;
+        }
+
+        return isSelectedForRendering(block);
     }
 }
