@@ -16,7 +16,9 @@
     "GameRendererAccessor",
     "PlayerListEntryMixin",
     "ClientPlayNetworkHandlerMixin",
-    "ChunkFinderWorldMixin"
+    "ChunkFinderWorldMixin",
+    "KeyboardInputMixin",
+    "FreecamWorldRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
