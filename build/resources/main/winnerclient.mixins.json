@@ -19,6 +19,7 @@
     "PlayerListEntryMixin",
     "ClientPlayNetworkHandlerMixin",
     "ChunkFinderWorldMixin"
+    "RedstoneDebugPacketMixin"
   ],
   "injectors": {
     "defaultRequire": 1
