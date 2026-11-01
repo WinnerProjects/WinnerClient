@@ -59,6 +59,7 @@ public class ModuleManager {
         register(new HoleESP());
         register(new Fullbright());
         register(new XRay());
+        register(new ReverseXRay());
         register(new Nametags());
         register(new BlockOverlay());
         register(new Freelook());
