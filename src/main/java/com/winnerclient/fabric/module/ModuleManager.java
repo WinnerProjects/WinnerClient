@@ -89,6 +89,8 @@ public class ModuleManager {
         register(new SeedChunkFinder());
         register(new ChunkFinder());
         register(new RedstoneDebug());
+        register(new RektMovement());
+        register(new RektAlert());
 
         for (Module module : modules) {
             if (module.isEnabled()) {
