@@ -1,0 +1,20 @@
+package com.winnerclient.fabric.mixin;
+
+import com.winnerclient.fabric.render.StorageShaderPipeline;
+import net.minecraft.client.gl.ShaderLoader;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+/** Precompiles WinnerClient custom RenderPipeline shader sources after reload. */
+@Mixin(ShaderLoader.class)
+public abstract class ShaderLoaderMixin {
+    @Inject(
+        method = "apply(Lnet/minecraft/client/gl/ShaderLoader$Definitions;Lnet/minecraft/resource/ResourceManager;Lnet/minecraft/util/profiler/Profiler;)V",
+        at = @At("TAIL")
+    )
+    private void winner$precompilePipelines(CallbackInfo ci) {
+        StorageShaderPipeline.precompile();
+    }
+}
