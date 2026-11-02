@@ -19,7 +19,8 @@
     "ChunkFinderWorldMixin",
     "RedstoneDebugPacketMixin",
     "KeyboardInputMixin",
-    "FullbrightLightmapMixin"
+    "FullbrightLightmapMixin",
+    "ShaderLoaderMixin"
   ],
   "injectors": {
     "defaultRequire": 1
