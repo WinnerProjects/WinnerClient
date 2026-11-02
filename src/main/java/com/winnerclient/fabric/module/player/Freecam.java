@@ -203,8 +203,8 @@ public class Freecam extends Module {
 
         Vec3d forward = Vec3d.fromPolar(0, yaw).normalize();
 
-        // yaw - 90 points to the player's right.
-        Vec3d right = Vec3d.fromPolar(0, yaw - 90).normalize();
+        // Minecraft yaw increases toward the player's right.
+        Vec3d right = Vec3d.fromPolar(0, yaw + 90).normalize();
 
         double velX = 0.0;
         double velY = 0.0;
