@@ -355,7 +355,7 @@ public final class StorageESP extends Module {
             shaderWidth.getValue(), (float) (fillPercent.getValue() / 100.0),
             "Lines".equalsIgnoreCase(shapeMode.getValue()) ? 0 :
                 "Sides".equalsIgnoreCase(shapeMode.getValue()) ? 1 : 2,
-            (float) glowMultiplier.getValue()
+            glowMultiplier.getValue().floatValue()
         );
         shaderBoxes.clear();
     }

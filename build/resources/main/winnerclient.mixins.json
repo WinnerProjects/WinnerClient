@@ -17,7 +17,10 @@
     "PlayerListEntryMixin",
     "ClientPlayNetworkHandlerMixin",
     "ChunkFinderWorldMixin",
-    "RedstoneDebugPacketMixin"
+    "RedstoneDebugPacketMixin",
+    "KeyboardInputMixin",
+    "FullbrightLightmapMixin",
+    "ShaderLoaderMixin"
   ],
   "injectors": {
     "defaultRequire": 1

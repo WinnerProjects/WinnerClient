@@ -340,7 +340,7 @@ public final class Nametags extends Module {
 
         if (title.isEmpty()) return;
         List<StackInfo> stackInfo = stackInfo(stacks, tr);
-        float uiScale = (float) scale.getValue();
+        float uiScale = scale.getValue().floatValue();
         if (distanceScale.getValue()) uiScale *= MathHelper.clamp((float) (8.0 / Math.max(8.0, depth)), 0.55f, 1.0f);
 
         int titleWidth = width(tr, title);
@@ -385,7 +385,7 @@ public final class Nametags extends Module {
                 int enchantY = itemY + 16 + (anyDurability ? tr.fontHeight : 0);
                 if ("Above".equals(enchantPosition.getValue())) enchantY = itemY - info.enchants().size() * tr.fontHeight;
                 for (String enchant : info.enchants()) {
-                    drawCenteredScaled(context, tr, enchant, x + columnWidth / 2, enchantY, enchantColor.getValue(), (float) enchantTextScale.getValue());
+                    drawCenteredScaled(context, tr, enchant, x + columnWidth / 2, enchantY, enchantColor.getValue(), enchantTextScale.getValue().floatValue());
                     if (!"Above".equals(enchantPosition.getValue())) enchantY += tr.fontHeight;
                     else enchantY += tr.fontHeight;
                 }
