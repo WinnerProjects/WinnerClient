@@ -2,52 +2,78 @@ package com.winnerclient.fabric.module.player;
 
 import com.winnerclient.fabric.module.Module;
 import com.winnerclient.fabric.module.Setting;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.MutableText;
-import net.minecraft.text.PlainTextContent;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
-import net.minecraft.text.TextContent;
+
+import java.util.Optional;
 
 public class NameHider extends Module {
     public static NameHider instance;
 
-    private final Setting.StringSetting originalName = addString("OriginalName", "Name to hide", "");
-    private final Setting.StringSetting replacedName = addString("ReplacedName", "Name to show instead", "Hidden");
+    private final Setting.StringSetting originalName = addString(
+        "OriginalName",
+        "Name to hide. Leave empty to hide your own name.",
+        ""
+    );
+
+    private final Setting.StringSetting replacedName = addString(
+        "ReplacedName",
+        "Name to show instead.",
+        "Hidden"
+    );
 
     public NameHider() {
-        super("NameHider", "Replace a player's name everywhere", Category.PLAYER);
+        super("NameHider", "Replace a player's name", Category.PLAYER);
         instance = this;
     }
 
     public static String getOriginal() {
         if (instance == null || !instance.isEnabled()) return "";
-        return instance.originalName.getValue();
+
+        String configured = instance.originalName.getValue();
+        if (configured != null && !configured.isEmpty()) return configured;
+
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc.player == null) return "";
+
+        return mc.player.getName().getString();
     }
 
     public static String getReplaced() {
         if (instance == null || !instance.isEnabled()) return "";
-        return instance.replacedName.getValue();
+
+        String replacement = instance.replacedName.getValue();
+        return replacement == null ? "" : replacement;
     }
 
     public static Text replace(Text text) {
-        String orig = getOriginal();
-        String repl = getReplaced();
-        if (orig.isEmpty() || orig.equals(repl)) return text;
-        return replaceRecursive(text, orig, repl);
-    }
+        if (text == null) return null;
 
-    private static Text replaceRecursive(Text text, String orig, String repl) {
-        MutableText result;
-        if (text.getContent() instanceof PlainTextContent ptc) {
-            String s = ptc.string();
-            result = s.contains(orig) ? Text.literal(s.replace(orig, repl)) : text.copy();
-        } else {
-            result = text.copy();
-            result.getSiblings().clear();
+        String original = getOriginal();
+        String replacement = getReplaced();
+
+        if (original.isEmpty() || original.equals(replacement)) {
+            return text;
         }
-        result.setStyle(text.getStyle());
-        for (Text sibling : text.getSiblings()) {
-            result.append(replaceRecursive(sibling, orig, repl));
-        }
-        return result;
+
+        MutableText result = Text.empty();
+        boolean[] changed = {false};
+
+        // Visit the resolved text, including translation arguments,
+        // while preserving the style of each text segment.
+        text.visit((style, segment) -> {
+            String updated = segment.replace(original, replacement);
+
+            if (!updated.equals(segment)) {
+                changed[0] = true;
+            }
+
+            result.append(Text.literal(updated).setStyle(style));
+            return Optional.empty();
+        }, Style.EMPTY);
+
+        return changed[0] ? result : text;
     }
 }
