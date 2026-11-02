@@ -9,28 +9,28 @@ import net.minecraft.util.math.Vec3d;
 
 public class Freecam extends Module {
     private final Setting.NumberSetting speed = addNum(
-            "Speed",
-            "Freecam speed",
-            1.0,
-            0.1,
-            5.0,
-            0.1
+        "Speed",
+        "Freecam speed",
+        1.0,
+        0.1,
+        5.0,
+        0.1
     );
 
     private final Setting.BoolSetting antiFreecamBypass = addBool(
-            "AntiFreecam Bypass",
-            "Visually fill connected air pockets smaller than 6 blocks",
-            false
+        "AntiFreecam Bypass",
+        "Visually fill connected air pockets smaller than 6 blocks",
+        false
     );
 
     private static final PlayerInput EMPTY_INPUT = new PlayerInput(
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
     );
 
     private static Vec3d pos;
@@ -44,10 +44,6 @@ public class Freecam extends Module {
     private static volatile boolean active;
     private static volatile boolean bypassActive;
 
-    /*
-     * KeyboardInputMixin, oyuncunun girdisini sıfırlamadan önce
-     * kamera için buraya kaydeder.
-     */
     private static PlayerInput cameraInput = EMPTY_INPUT;
     private static boolean keepSneaking;
 
@@ -57,9 +53,9 @@ public class Freecam extends Module {
 
     public Freecam() {
         super(
-                "Freecam",
-                "Camera moves freely, player stays behind",
-                Category.PLAYER
+            "Freecam",
+            "Camera moves freely, player stays behind",
+            Category.PLAYER
         );
     }
 
@@ -71,18 +67,10 @@ public class Freecam extends Module {
         return active && bypassActive;
     }
 
-    /**
-     * KeyboardInputMixin tarafından çağrılır.
-     * Orijinal tuşları kamera hareketi için saklar.
-     */
     public static void captureInput(PlayerInput input) {
         cameraInput = input != null ? input : EMPTY_INPUT;
     }
 
-    /**
-     * Freecam açıldığında oyuncu eğiliyorsa, kamera hareket ederken
-     * oyuncunun eğilme durumunu korur.
-     */
     public static boolean shouldKeepSneaking() {
         return active && keepSneaking;
     }
@@ -112,11 +100,10 @@ public class Freecam extends Module {
         lastPitch = pitch;
 
         yaw += (float) deltaX;
-
         pitch = MathHelper.clamp(
-                pitch + (float) deltaY,
-                -90.0f,
-                90.0f
+            pitch + (float) deltaY,
+            -90.0f,
+            90.0f
         );
     }
 
@@ -176,9 +163,9 @@ public class Freecam extends Module {
 
             if (returnPos != null) {
                 mc.player.setPos(
-                        returnPos.x,
-                        returnPos.y,
-                        returnPos.z
+                    returnPos.x,
+                    returnPos.y,
+                    returnPos.z
                 );
 
                 mc.player.setYaw(returnYaw);
@@ -215,7 +202,9 @@ public class Freecam extends Module {
         double mult = input.sprint() ? 1.0 : 0.5;
 
         Vec3d forward = Vec3d.fromPolar(0, yaw).normalize();
-        Vec3d right = Vec3d.fromPolar(0, yaw + 90).normalize();
+
+        // yaw - 90 points to the player's right.
+        Vec3d right = Vec3d.fromPolar(0, yaw - 90).normalize();
 
         double velX = 0.0;
         double velY = 0.0;
@@ -242,7 +231,7 @@ public class Freecam extends Module {
         }
 
         if ((input.forward() || input.backward())
-                && (input.right() || input.left())) {
+            && (input.right() || input.left())) {
             double diagonal = 1.0 / Math.sqrt(2.0);
             velX *= diagonal;
             velZ *= diagonal;
