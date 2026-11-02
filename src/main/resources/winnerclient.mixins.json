@@ -20,7 +20,9 @@
     "RedstoneDebugPacketMixin",
     "KeyboardInputMixin",
     "FullbrightLightmapMixin",
-    "ShaderLoaderMixin"
+    "ShaderLoaderMixin",
+    "FreecamWorldRendererMixin",
+    "ReverseXRayRegionMixin"
   ],
   "injectors": {
     "defaultRequire": 1
