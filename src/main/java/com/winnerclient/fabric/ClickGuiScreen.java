@@ -53,6 +53,7 @@ public class ClickGuiScreen extends Screen {
         WORLD("World", "◉"),
         RENDER("Render", "▣"),
         MISC("Misc", "⚙"),
+        CLIENT("Client", "✦"),
         CONFIGS("Configs", "▤");
 
         final String title;
@@ -364,20 +365,15 @@ public class ClickGuiScreen extends Screen {
     }
 
     private List<Module> getVisibleModules() {
-        if (selectedPage == Page.MISC) {
-            List<Module> combined = new ArrayList<>();
-            combined.addAll(ModuleManager.getModulesByCategory(Module.Category.MISC));
-            combined.addAll(ModuleManager.getModulesByCategory(Module.Category.CLIENT));
-            return combined;
-        }
-
         Module.Category category = switch (selectedPage) {
             case COMBAT -> Module.Category.COMBAT;
             case MOVEMENT -> Module.Category.MOVEMENT;
             case PLAYER -> Module.Category.PLAYER;
             case WORLD -> Module.Category.WORLD;
             case RENDER -> Module.Category.RENDER;
-            case MISC, CONFIGS -> Module.Category.MISC;
+            case MISC -> Module.Category.MISC;
+            case CLIENT -> Module.Category.CLIENT;
+            case CONFIGS -> Module.Category.MISC;
         };
         return ModuleManager.getModulesByCategory(category);
     }
