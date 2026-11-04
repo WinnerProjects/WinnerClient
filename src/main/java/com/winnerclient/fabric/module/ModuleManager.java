@@ -66,7 +66,7 @@ public class ModuleManager {
         register(new Nametags());
         register(new BlockOverlay());
         register(new Freelook());
-        register(new SpotifyHUD());
+        register(new LocalSpotifyHUD());
 
         // World
         register(new Nuker());
