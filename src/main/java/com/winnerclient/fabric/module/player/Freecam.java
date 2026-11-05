@@ -8,6 +8,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
 public class Freecam extends Module {
+
     private final Setting.NumberSetting speed = addNum(
         "Speed",
         "Freecam speed",
@@ -47,7 +48,6 @@ public class Freecam extends Module {
     private static PlayerInput cameraInput = EMPTY_INPUT;
     private static boolean keepSneaking;
 
-    private Vec3d returnPos;
     private float returnYaw;
     private float returnPitch;
 
@@ -118,7 +118,7 @@ public class Freecam extends Module {
             return;
         }
 
-        returnPos = mc.player.getEntityPos();
+        // Save only the player's viewing direction, not their position.
         returnYaw = mc.player.getYaw();
         returnPitch = mc.player.getPitch();
 
@@ -135,9 +135,7 @@ public class Freecam extends Module {
         keepSneaking = mc.player.isSneaking();
         cameraInput = EMPTY_INPUT;
 
-        mc.player.setNoGravity(true);
-        mc.player.setVelocity(Vec3d.ZERO);
-
+        // Do not change player gravity or velocity.
         bypassActive = antiFreecamBypass.getValue();
         active = true;
 
@@ -150,6 +148,7 @@ public class Freecam extends Module {
     public void onDisable() {
         MinecraftClient mc = MinecraftClient.getInstance();
 
+        boolean wasActive = active;
         boolean wasBypassActive = bypassActive;
 
         active = false;
@@ -157,24 +156,13 @@ public class Freecam extends Module {
         cameraInput = EMPTY_INPUT;
         keepSneaking = false;
 
-        if (mc.player != null) {
-            mc.player.setNoGravity(false);
-            mc.player.setVelocity(Vec3d.ZERO);
-
-            if (returnPos != null) {
-                mc.player.setPos(
-                    returnPos.x,
-                    returnPos.y,
-                    returnPos.z
-                );
-
-                mc.player.setYaw(returnYaw);
-                mc.player.setPitch(returnPitch);
-                mc.player.setHeadYaw(returnYaw);
-            }
+        // Restore only the original viewing direction.
+        // The player's current position, gravity and velocity are untouched.
+        if (wasActive && mc.player != null) {
+            mc.player.setYaw(returnYaw);
+            mc.player.setPitch(returnPitch);
+            mc.player.setHeadYaw(returnYaw);
         }
-
-        returnPos = null;
 
         if (wasBypassActive) {
             reloadRenderer();
@@ -202,8 +190,6 @@ public class Freecam extends Module {
         double mult = input.sprint() ? 1.0 : 0.5;
 
         Vec3d forward = Vec3d.fromPolar(0, yaw).normalize();
-
-        // Minecraft yaw increases toward the player's right.
         Vec3d right = Vec3d.fromPolar(0, yaw + 90).normalize();
 
         double velX = 0.0;
@@ -231,7 +217,7 @@ public class Freecam extends Module {
         }
 
         if ((input.forward() || input.backward())
-            && (input.right() || input.left())) {
+                && (input.right() || input.left())) {
             double diagonal = 1.0 / Math.sqrt(2.0);
             velX *= diagonal;
             velZ *= diagonal;
