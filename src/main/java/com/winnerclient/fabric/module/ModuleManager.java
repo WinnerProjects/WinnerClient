@@ -56,6 +56,8 @@ public class ModuleManager {
         register(new XCarry());
 
         // Render
+        
+        register(new ProjectileTrajectory());
         register(new ESP());
         register(new BlockESP());
         register(new StorageESP());
