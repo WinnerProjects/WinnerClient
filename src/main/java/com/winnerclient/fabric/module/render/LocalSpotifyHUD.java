@@ -1,8 +1,12 @@
 package com.winnerclient.fabric.module.render;
 
+import com.winnerclient.fabric.ConfigManager;
+import com.winnerclient.fabric.media.AndroidMediaProvider;
+import com.winnerclient.fabric.media.MediaControlScreen;
 import com.winnerclient.fabric.media.MediaProvider;
 import com.winnerclient.fabric.media.MediaSnapshot;
 import com.winnerclient.fabric.media.WindowsMediaProvider;
+import com.winnerclient.fabric.module.ModuleManager;
 import com.winnerclient.fabric.module.Setting;
 
 import net.minecraft.client.MinecraftClient;
@@ -29,10 +33,30 @@ public final class LocalSpotifyHUD extends SpotifyHUD {
             "Spotify Desktop"
     );
 
+    // Android bridge: pairing key shown by the SpotifyBridge app. Never logged, never sent over the
+    // socket (mutual HMAC challenge-response). Kept as a normal ClickGUI string setting so it can be
+    // pasted on touch devices.
+    private final Setting.StringSetting bridgeKey = addString(
+            "Bridge Key",
+            "Pairing key from the SpotifyBridge Android app (keep it private)",
+            ""
+    );
+
+    // Momentary switch for touch devices: tap it in ClickGUI to open the media control screen.
+    private final Setting.BoolSetting openControls = addBool(
+            "Open Controls",
+            "Tap to open touch media controls",
+            false
+    );
+
     private static final Identifier ART_ID =
             Identifier.of("winnerclient", "dynamic/media_art");
 
     private volatile String selectedSource = "Auto";
+    private volatile String selectedKey = "";
+
+    // 0..1 while the progress bar is being dragged, otherwise -1 (render thread + input thread are the same).
+    private double seekPreview = -1;
 
     private MediaProvider provider;
     private ExecutorService artworkWorker;
@@ -77,9 +101,21 @@ public final class LocalSpotifyHUD extends SpotifyHUD {
         String os = System.getProperty("os.name", "")
                 .toLowerCase(Locale.ROOT);
 
+        selectedKey = bridgeKey.getValue();
+
+        // Momentary switch: a stale "true" (toggled while the module was off) must not pop the
+        // screen open the moment the module is enabled.
+        openControls.setValue(false);
+
         if (os.contains("windows")) {
             provider = new WindowsMediaProvider(
                     () -> selectedSource
+            );
+        } else {
+            // Android launchers (Mojo/Pojav-style) run a Linux JVM, so os.name is not reliable here.
+            // Any non-Windows host talks to the SpotifyBridge app on 127.0.0.1.
+            provider = new AndroidMediaProvider(
+                    () -> selectedKey
             );
         }
     }
@@ -110,6 +146,51 @@ public final class LocalSpotifyHUD extends SpotifyHUD {
     @Override
     public void onTick() {
         selectedSource = source.getValue();
+        selectedKey = bridgeKey.getValue();
+
+        if (openControls.getValue()) {
+            openControls.setValue(false);
+            ConfigManager.save();
+            openControlsScreen();
+        }
+    }
+
+    /** Opens the interactive screen (free cursor => taps/clicks reach the HUD, not the game). */
+    public void openControlsScreen() {
+        MinecraftClient mc = MinecraftClient.getInstance();
+
+        if (mc.player != null && isEnabled()) {
+            mc.setScreen(new MediaControlScreen(this));
+        }
+    }
+
+    /** Used by the (optional) key binding. */
+    public static void openControls() {
+        if (ModuleManager.getModule("SpotifyHUD") instanceof LocalSpotifyHUD hud) {
+            hud.openControlsScreen();
+        }
+    }
+
+    public boolean contains(double x, double y) {
+        return panelW > 0
+                && x >= panelX && x <= panelX + panelW
+                && y >= panelY && y <= panelY + panelH;
+    }
+
+    public void handleDrag(double x) {
+        if (provider == null
+                || !visible.seek()
+                || visible.durationMs() <= 0
+                || barW <= 0) {
+            seekPreview = -1;
+            return;
+        }
+
+        seekPreview = Math.max(0, Math.min(1, (x - barX) / barW));
+    }
+
+    public void cancelSeek() {
+        seekPreview = -1;
     }
 
     @Override
@@ -297,7 +378,7 @@ public final class LocalSpotifyHUD extends SpotifyHUD {
         );
 
         String artist = media.artist().isBlank()
-                ? " "
+                ? (media.title().isBlank() ? " " : "Unknown artist")
                 : media.artist();
 
         context.drawText(
@@ -311,6 +392,10 @@ public final class LocalSpotifyHUD extends SpotifyHUD {
 
         long position = media.estimatedPosition();
         long duration = media.durationMs();
+
+        if (seekPreview >= 0 && duration > 0) {
+            position = (long) (seekPreview * duration);
+        }
 
         String elapsed = position < 0
                 ? "--:--"
@@ -494,6 +579,8 @@ public final class LocalSpotifyHUD extends SpotifyHUD {
     }
 
     public void handleSeek(double x) {
+        seekPreview = -1;
+
         if (provider == null
                 || !visible.seek()
                 || visible.durationMs() <= 0

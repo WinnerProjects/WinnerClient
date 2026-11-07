@@ -18,6 +18,7 @@ public class WinnerClientMod implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     public static KeyBinding openGuiKey;
+    public static KeyBinding mediaControlsKey;
     public static MinecraftClient client;
 
     @Override
@@ -47,6 +48,17 @@ public class WinnerClientMod implements ClientModInitializer {
         );
 
         EventBus.registerKeyBinding(openGuiKey);
+
+        // Lang entry already existed; default is unbound (rebind in Controls, or use the
+        // "Open Controls" switch of SpotifyHUD in ClickGUI on touch devices).
+        mediaControlsKey = new KeyBinding(
+            "key.winnerclient.media_controls",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_UNKNOWN,
+            KeyBinding.Category.MISC
+        );
+
+        EventBus.registerKeyBinding(mediaControlsKey);
         EventBus.init();
 
         LOGGER.info("EventBus initialized.");

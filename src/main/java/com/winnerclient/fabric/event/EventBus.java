@@ -4,6 +4,7 @@ import com.winnerclient.fabric.ConfigManager;
 import com.winnerclient.fabric.WinnerClientMod;
 import com.winnerclient.fabric.module.ModuleManager;
 import com.winnerclient.fabric.module.misc.ChunkFinder;
+import com.winnerclient.fabric.module.render.LocalSpotifyHUD;
 import com.winnerclient.fabric.module.render.StorageESP;
 import com.winnerclient.fabric.render.StorageShaderPipeline;
 
@@ -53,6 +54,9 @@ public class EventBus {
             }
 
             if (WinnerClientMod.openGuiKey.wasPressed()) WinnerClientMod.openClickGui();
+            if (WinnerClientMod.mediaControlsKey != null && WinnerClientMod.mediaControlsKey.wasPressed()) {
+                LocalSpotifyHUD.openControls();
+            }
             ModuleManager.checkKeybinds();
             ModuleManager.onTick();
         });

@@ -22,7 +22,8 @@
     "FullbrightLightmapMixin",
     "ShaderLoaderMixin",
     "FreecamWorldRendererMixin",
-    "ReverseXRayRegionMixin"
+    "ReverseXRayRegionMixin",
+    "MinecraftClientMixin"
   ],
   "injectors": {
     "defaultRequire": 1

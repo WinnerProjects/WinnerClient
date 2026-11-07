@@ -28,7 +28,17 @@ public final class MediaControlScreen extends Screen {
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
         if (click.getKeycode() == 0) {
+            // Touch devices have no Escape key: tapping outside the panel closes the screen.
+            if (!hud.contains(click.x(), click.y())) {
+                close();
+                return true;
+            }
+
             seeking = hud.handleClick(click.x(), click.y());
+
+            if (seeking) {
+                hud.handleDrag(click.x());
+            }
         }
 
         return true;
@@ -40,6 +50,10 @@ public final class MediaControlScreen extends Screen {
             double deltaX,
             double deltaY
     ) {
+        if (seeking) {
+            hud.handleDrag(click.x());
+        }
+
         return true;
     }
 
@@ -51,6 +65,12 @@ public final class MediaControlScreen extends Screen {
 
         seeking = false;
         return true;
+    }
+
+    @Override
+    public void removed() {
+        hud.cancelSeek();
+        seeking = false;
     }
 
     @Override
