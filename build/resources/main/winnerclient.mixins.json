@@ -23,7 +23,8 @@
     "ShaderLoaderMixin",
     "FreecamWorldRendererMixin",
     "ReverseXRayRegionMixin",
-    "MinecraftClientMixin"
+    "MinecraftClientMixin",
+    "ScoreboardHudMixin"
   ],
   "injectors": {
     "defaultRequire": 1
