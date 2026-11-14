@@ -26,6 +26,7 @@ public class ModuleManager {
     public static void init() {
         // Combat
         register(new KillAura());
+        register(new MaceSmasher());
         register(new Criticals());
         register(new TriggerBot());
         register(new SwingSpeed());
